@@ -11,6 +11,7 @@
 #include <iostream>
 
 
+
 class Tetromino {
 public:
 
@@ -20,6 +21,7 @@ public:
 	int size = 4;
 
 	std::vector <glm::mat4> models;
+	std::vector <glm::mat4> translation;
 	std::vector <GameSector> elements;
 	std::vector <glm::vec3> currentPositions;
 	std::vector <glm::vec2> currentIndex;
@@ -69,8 +71,8 @@ public:
 		for (int i = 0; i < elements.size(); i++) {
 			models.push_back(glm::translate(glm::mat4(1.0f), elements[i].WorldPosition));
 			currentPositions.push_back(elements[i].WorldPosition);
-			currentIndex.push_back(glm::vec2(elements[i].WorldPosition.x+5.5, elements[i].WorldPosition.y+11));
-		
+			currentIndex.push_back(glm::vec2(elements[i].WorldPosition.x + 5.5, elements[i].WorldPosition.y + 11));
+			moved.push_back(0);
 		}
 
 		for (int i = 0; i < rotationMatrix.size(); i++) {
@@ -80,105 +82,106 @@ public:
 		}
 	}
 
-std::vector<float> draw(float m_speed, float r_speed) {
-	std::vector <float> vec;
-
-	//rotation
-	angle = angle + r_speed;
-	if (angle == 181)
-		angle = -179;
-	if (angle == -181)
-		angle = 179;
-
-	//horizontal movement
-	distance = distance + m_speed;
-	if (distance == 1.25)
-		distance = 0.25;
-	if (distance == -1.25)
-		distance = -0.25;
-
-	bool collsion = false;
-
-	if (m_speed != 0.0)
-		collsion = checkCollision(m_speed);
-
-	for (int i = 0; i < models.size(); i++) {
-		glm::mat4 model = glm::translate(models[i], glm::vec3(0.0, 0.0, 0.0));
-		glm::mat4 transform = glm::mat4(1.0f);
-		pivot = elements[pivotIndex].WorldPosition;
-		glm::vec3 pivotTemp = pivot - elements[i].WorldPosition;
-		transform = glm::translate(transform, pivotTemp);
-		transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-		transform = glm::translate(transform, -pivotTemp);
-
-		if (collsion == false) {
-			model = glm::translate(model, glm::vec3(1.0, 0.0, 0.0) * m_speed);		
+	float movements = 100.0f;
+	std::vector<int> moved;
+	void move(glm::mat4 *model, float *direction, int index) {
+		if (*direction != 0.0f && moved[index] < movements) {
+			moved[index]++;
+			*model = glm::translate(*model, glm::vec3(1.0, 0.0, 0.0) * 1.0f / movements * *direction);
 		}
-
-		models[i] = model;
-		elements[i].block.draw(model, transform);
-	}
-	if (((distance == 1.0f || distance == -1.0f) && m_speed != 0.0f)) {
-		for (int i = 0; i < elements.size(); i++) {
-			currentIndex[i].x = currentIndex[i].x + distance;
-			distance = 0.0f;
+		else {
+			moved[index] = 0;
+			addToIndex((int)*direction);
+			*direction = 0.0;
+			if (index == 0) {
+				std::cout << "\n";
+			}
+			std::cout << "Pos:";
+			std::cout << currentIndex[index].x;
 		}
-		distance = 0.0f;
-		vec.push_back(0.0f);
 	}
-	else
-		vec.push_back(m_speed);
-
-	if ((angle == 0.0f || angle == 90.0f || angle == 180.0f || angle == -90.0f || angle == -180.0f) && r_speed != 0.0) {
-		rotatePoitions(angle);
-		vec.push_back(0.0f);
+	void addToIndex(int n) {
+		if (n == 0) return;
+		for (int i = 0; i < currentIndex.size(); i++) {
+			currentIndex[i] += n;
+		}
 	}
-	else
-		vec.push_back(r_speed);
+	void draw(float *direction, float r_speed) {
+		std::vector <float> vec;
 
-	return vec;
-}
+		//rotation
+		angle = angle + r_speed;
 
-bool checkCollision(float direction) {
-	return false;
-}
+		bool collsion = false;
 
-std::vector < std::vector<glm::vec3> > rotateMatrix(std::vector < std::vector<glm::vec3> > matrix) {
-	std::vector<std::vector<glm::vec3> >rm(size, std::vector<glm::vec3>(size));
-	for (int i = 0; i < size; i++) {
-		for (int j = 0; j < size; j++) {
-			rm[i][j] = matrix[(size-j)-1.0][i];
+		for (int i = 0; i < models.size(); i++) {
+			glm::mat4 model = models[i];
+			glm::mat4 transform = glm::mat4(1.0f);
+			pivot = elements[pivotIndex].WorldPosition;
+			glm::vec3 pivotTemp = pivot - elements[i].WorldPosition;
+			transform = glm::translate(transform, pivotTemp);
+			transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+			transform = glm::translate(transform, -pivotTemp);
+
+			move(&model, direction, i);
+
+			models[i] = model;
+			elements[i].block.draw(model, transform);
 		}
 	}
 
-	return rm;
-}
+	bool checkCollision(float direction) {
+		return false;
+	}
+	float angleRot = 0;
+	float getAngle(bool rotate) {
+		if (rotate && angleRot <= 90) {
+			return angleRot++;
+		}
+		else if (angleRot >= 90) {
 
-void rotatePoitions(float a) {
-	std::vector<std::vector<glm::vec3> >rm = rotationMatrix;
+			angleRot = 0;
+		}
+		else {
+			return angleRot;
+		}
+	}
+	std::vector < std::vector<glm::vec3> > rotateMatrix(std::vector < std::vector<glm::vec3> > matrix) {
+		std::vector<std::vector<glm::vec3> >rm(size, std::vector<glm::vec3>(size));
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				rm[i][j] = matrix[(size - j) - 1.0][i];
+			}
+		}
 
-	if (a == 0.0f) {
-		rm = rotationMatrix;
-	}
-	if (a == 90.0f) {
-		rm = rotateMatrix(rm);
-	}
-	if (a == 180.0f) {
-		rm = rotateMatrix(rm);
-		rm = rotateMatrix(rm);
-	}
-	if (a == -90.0f) {
-		rm = rotateMatrix(rm);
-		rm = rotateMatrix(rm);
-	}
-	if (a == -180.0f) {
-		rm = rotateMatrix(rm);
-		rm = rotateMatrix(rm);
-		rm = rotateMatrix(rm);
+		return rm;
 	}
 
-}
+	void rotatePoitions(float a) {
+		std::vector<std::vector<glm::vec3> >rm = rotationMatrix;
+
+		if (a == 0.0f) {
+			rm = rotationMatrix;
+		}
+		if (a == 90.0f) {
+			rm = rotateMatrix(rm);
+		}
+		if (a == 180.0f) {
+			rm = rotateMatrix(rm);
+			rm = rotateMatrix(rm);
+		}
+		if (a == -90.0f) {
+			rm = rotateMatrix(rm);
+			rm = rotateMatrix(rm);
+		}
+		if (a == -180.0f) {
+			rm = rotateMatrix(rm);
+			rm = rotateMatrix(rm);
+			rm = rotateMatrix(rm);
+		}
+
+	}
 
 };
- 
+
 #endif

@@ -13,11 +13,14 @@
 #include "Tetromino.h"
 #include <iostream>
 
+#define move 1.0f
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
+void setMovingSpeed(float direction);
+bool tetrominoIsStill();
 unsigned int bindUniformBuffer(std::vector<Shader> shaders);
 
 float vertices[] = {
@@ -81,6 +84,9 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+
+float moveDirection = 0.0f;
+bool rotateBlock = false;
 
 int main()
 {
@@ -203,11 +209,9 @@ int main()
 			}
 		}
 		
-		//Figur
-		std::vector<float> info = t1.draw(m_speed, r_speed);
-		m_speed = info[0];
-		r_speed = info[1];
-
+		//Tetromino
+		t1.draw(&moveDirection, r_speed);
+		
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -253,17 +257,25 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		m_speed = 0.25f;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		setMovingSpeed(1.0f);
+	}
 	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		m_speed = -0.25f;
+		setMovingSpeed(-1.0f);
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		r_speed = 1.0f;
+		rotateBlock = true;
 	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 		r_speed = -1.0f;
 
 }
-
+void setMovingSpeed(float direction) {
+	if (tetrominoIsStill()) {
+		moveDirection = move * direction;
+	}
+}
+bool tetrominoIsStill() {
+	return moveDirection == 0;
+}
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
