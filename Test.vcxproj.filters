@@ -64,5 +64,8 @@
     <None Include="rot.fs">
       <Filter>shader</Filter>
     </None>
+    <None Include="blau.fs">
+      <Filter>shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -141,6 +141,7 @@
     <ClInclude Include="Tetromino.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="blau.fs" />
     <None Include="blockShader.vs" />
     <None Include="gruen.fs" />
     <None Include="orange.fs" />

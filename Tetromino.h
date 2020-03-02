@@ -26,7 +26,7 @@ public:
 	std::vector <glm::vec3> currentPositions;
 	std::vector <glm::vec2> currentIndex;
 
-	std::vector<std::vector<GameSector> > gamefield;
+	std::vector<std::vector<GameSector>> *gamefield;
 
 	std::vector<glm::vec2> index;
 	std::vector<std::vector<glm::vec3> > rotationMatrix;
@@ -38,14 +38,16 @@ public:
 	float rotation = 0.0f;
 	float distance = 0.0f;
 
+	bool reachedBottom = false;
 
-	Tetromino(std::vector < std::vector<GameSector> > gf, std::vector <Block> blocks, int c) {
+
+	Tetromino(std::vector < std::vector<GameSector> > *gf, std::vector <Block> blocks, int c) {
 		rotationMatrix = std::vector<std::vector<glm::vec3> >(size, std::vector<glm::vec3>(size));
-		widht = gf.size();
-		height = gf[0].size();
 		gamefield = gf;
-		int x = gf.size() / 2;
-		int y = gf[0].size() - 2;
+		widht = gamefield->size();
+		height = (*gamefield)[0].size();
+		int x = gamefield->size() / 2;
+		int y = (*gamefield)[0].size() - 2;
 		std::random_device rd;
 		std::mt19937 generator(rd());
 		std::uniform_int_distribution<> range(0, blocks.size() - 1);
@@ -53,13 +55,13 @@ public:
 
 		//L
 		if (c == 0) {
-			elements.push_back(GameSector(gf[x][y].WorldPosition, b));
+			elements.push_back(GameSector((*gamefield)[x][y].WorldPosition, b));
 			index.push_back(glm::vec2(x, y));
-			elements.push_back(GameSector(gf[x][y - 1.0].WorldPosition, b));
+			elements.push_back(GameSector((*gamefield)[x][y - 1.0].WorldPosition, b));
 			index.push_back(glm::vec2(x, y - 1));
-			elements.push_back(GameSector(gf[x][y - 2.0].WorldPosition, b));
+			elements.push_back(GameSector((*gamefield)[x][y - 2.0].WorldPosition, b));
 			index.push_back(glm::vec2(x, y - 2));
-			elements.push_back(GameSector(gf[x + 1.0][y - 2.0].WorldPosition, b));
+			elements.push_back(GameSector((*gamefield)[x + 1.0][y - 2.0].WorldPosition, b));
 			index.push_back(glm::vec2(x + 1, y - 2));
 			pivotIndex = 1;
 			pivot = elements[pivotIndex].WorldPosition;
@@ -73,40 +75,76 @@ public:
 			currentPositions.push_back(elements[i].WorldPosition);
 			currentIndex.push_back(glm::vec2(elements[i].WorldPosition.x + 5.5, elements[i].WorldPosition.y + 11));
 			moved.push_back(0);
+			movedY.push_back(0);
 		}
 
 		for (int i = 0; i < rotationMatrix.size(); i++) {
 			for (int j = 0; j < rotationMatrix[i].size(); j++) {
-				rotationMatrix[i][j] = gf[i + 3][j + 17].WorldPosition;
+				rotationMatrix[i][j] = (*gamefield)[i + 3][j + 17].WorldPosition;
 			}
 		}
 	}
 
-	float movements = 100.0f;
+	bool isMoveable(int xDirection, int yDirection) {
+		for (int i = 0; i < currentIndex.size(); i++) {
+			int x = currentIndex[i].x + xDirection;
+			int y = currentIndex[i].y + yDirection;
+			if ((*gamefield)[x][y].blocked) {
+				return false;
+			}
+		}
+		return true;
+	}
+	float speed = 20.0f;
 	std::vector<int> moved;
 	void move(glm::mat4 *model, float *direction, int index) {
-		if (*direction != 0.0f && moved[index] < movements) {
+		if (!isMoveable(*direction, 0)) {
+			*direction = 0;
+			return;
+		}
+		if (*direction != 0.0f && moved[index] < speed) {
 			moved[index]++;
-			*model = glm::translate(*model, glm::vec3(1.0, 0.0, 0.0) * 1.0f / movements * *direction);
+			*model = glm::translate(*model, glm::vec3(1.0, 0.0, 0.0) * 1.0f / speed * *direction);
 		}
 		else {
 			moved[index] = 0;
-			addToIndex((int)*direction);
+			addToIndex((int)*direction, false);
 			*direction = 0.0;
-			if (index == 0) {
-				std::cout << "\n";
-			}
-			std::cout << "Pos:";
-			std::cout << currentIndex[index].x;
 		}
 	}
-	void addToIndex(int n) {
+	std::vector<int> movedY;
+	void moveDown(glm::mat4* model, int index, bool *shouldMoveDown,float *direction) {
+		bool moveable = isMoveable(0, -1.0f);
+		if (moveable && *shouldMoveDown && movedY[index] < speed) {
+			movedY[index]++;
+			*model = glm::translate(*model, glm::vec3(0.0, 1.0, 0.0) * 1.0f / speed * -1.0f);
+		}
+		else if(movedY[index]==speed) {
+			currentIndex[index].y--;
+			movedY[index] = 0;
+		}
+		else if(!moveable){
+			*shouldMoveDown = false;
+			*direction = 0.0;
+			reachedBottom = true;
+			addNewTetrominoToGamefield();
+		}
+	}
+	void addToIndex(int n, bool moveDown) {
 		if (n == 0) return;
 		for (int i = 0; i < currentIndex.size(); i++) {
-			currentIndex[i] += n;
+			currentIndex[i].x += n * !moveDown;
 		}
 	}
-	void draw(float *direction, float r_speed) {
+	void addNewTetrominoToGamefield() {
+		for (int i = 0; i < currentIndex.size(); i++) {
+			int x = currentIndex[i].x;
+			int y = currentIndex[i].y;
+			(*gamefield)[x][y].block = elements[i].block;
+			(*gamefield)[x][y].blocked = true;
+		}
+	}
+	void draw(float *direction, float r_speed, bool *shouldMoveDown) {
 		std::vector <float> vec;
 
 		//rotation
@@ -122,8 +160,12 @@ public:
 			transform = glm::translate(transform, pivotTemp);
 			transform = glm::rotate(transform, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
 			transform = glm::translate(transform, -pivotTemp);
-
-			move(&model, direction, i);
+			if (*shouldMoveDown) {
+				moveDown(&model, i, shouldMoveDown, direction);
+			}
+			else {
+				move(&model, direction, i);
+			}
 
 			models[i] = model;
 			elements[i].block.draw(model, transform);

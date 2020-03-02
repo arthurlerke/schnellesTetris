@@ -87,6 +87,7 @@ float lastFrame = 0.0f;
 
 float moveDirection = 0.0f;
 bool rotateBlock = false;
+bool moveDown = false;
 
 int main()
 {
@@ -119,9 +120,10 @@ int main()
 	Shader gruenShader("blockShader.vs","gruen.fs");
 	Shader orangeShader("blockShader.vs", "orange.fs");
 	Shader rotShader("blockShader.vs", "rot.fs");
+	Shader blauShader("blockShader.vs", "blau.fs");
 
 	std::vector<Shader> shaders = {
-		gruenShader,orangeShader,rotShader
+		gruenShader,orangeShader,rotShader, blauShader
 	};
 
 	BlockObject cube(vertices);
@@ -134,8 +136,9 @@ int main()
 	Block gruenerBlock(gruenShader, cube);
 	Block orangenerBlock(orangeShader, cube);
 	Block roterBlock(rotShader, cube);
+	Block blauerBlock(blauShader, cube);
 
-	std::vector <Block> blocks = { gruenerBlock, roterBlock };
+	std::vector <Block> blocks = { gruenerBlock, roterBlock, blauerBlock };
 
 	int height = 22;
 	int widht = 11;
@@ -163,7 +166,7 @@ int main()
 		}
 	}
 
-	Tetromino t1(gamefield,blocks,0);
+	Tetromino t1(&gamefield,blocks,0);
 
 	
 	
@@ -172,6 +175,7 @@ int main()
 	gruenShader.setInt("texture1", 0);
 	orangeShader.setInt("texture1", 0);
 	rotShader.setInt("texture1", 0);
+	blauShader.setInt("texture1", 0);
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -208,9 +212,11 @@ int main()
 				gamefield[i][j].block.draw(model,transform);
 			}
 		}
-		
+		if (t1.reachedBottom) {
+			t1 = Tetromino(&gamefield, blocks, 0);
+		}
 		//Tetromino
-		t1.draw(&moveDirection, r_speed);
+		t1.draw(&moveDirection, r_speed, &moveDown);
 		
 		
 		glfwSwapBuffers(window);
@@ -258,21 +264,28 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		setMovingSpeed(1.0f);
+		if (tetrominoIsStill()) {
+			moveDown = false;
+			moveDirection = move * 1.0f;
+		}
 	}
-	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		setMovingSpeed(-1.0f);
+	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		if (tetrominoIsStill()) {
+			moveDown = false;
+			moveDirection = move * -1.0f;
+		}
+	}
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 		rotateBlock = true;
-	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		r_speed = -1.0f;
+	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		if (tetrominoIsStill()) {
+			moveDirection = -1.0f;
+			moveDown = true;
+		}
+	}
 
 }
-void setMovingSpeed(float direction) {
-	if (tetrominoIsStill()) {
-		moveDirection = move * direction;
-	}
-}
+
 bool tetrominoIsStill() {
 	return moveDirection == 0;
 }
