@@ -9,6 +9,8 @@
 #include "Shader.h"
 #include "camera.h"
 #include "BlockObject.h"
+#include "Gamesector.h"
+#include "Tetromino.h"
 #include <iostream>
 
 
@@ -16,6 +18,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
+unsigned int bindUniformBuffer(std::vector<Shader> shaders);
 
 float vertices[] = {
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -61,6 +64,10 @@ float vertices[] = {
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
+float m_speed = 0.0;
+float r_speed = 0.0;
+glm::mat4 oldPos = glm::mat4(1.0f);
+
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -77,6 +84,7 @@ float lastFrame = 0.0f;
 
 int main()
 {
+	//Window creation
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -102,35 +110,66 @@ int main()
 	//Depth
 	glEnable(GL_DEPTH_TEST);
 
-	Shader shader1("vertexShader.vs", "fragmentShader.fs");
+	Shader gruenShader("blockShader.vs","gruen.fs");
+	Shader orangeShader("blockShader.vs", "orange.fs");
+	Shader rotShader("blockShader.vs", "rot.fs");
 
-	glm::vec3 gamefield[11][22];
-	float x = 0.0;
-	float y = 0.0;
+	std::vector<Shader> shaders = {
+		gruenShader,orangeShader,rotShader
+	};
 
-	for (unsigned int i = 0; i < (sizeof(gamefield) / sizeof(*gamefield)); i++) {
-		for (unsigned int j = 0; j < (sizeof(gamefield[i]) / sizeof(*gamefield[i])); j++) {
-			gamefield[i][j] = glm::vec3((i + x) - (sizeof(gamefield) / sizeof(*gamefield)) / 2.0f, (j + y) - sizeof(gamefield[i]) / sizeof(*gamefield[i]) / 2.0f, -25.0f);
-			//gap
-			//y += 0.05f;
+	BlockObject cube(vertices);
+	//BlockObject cube2(vertices);
+	unsigned int VBO[2], VAO[2];
+
+	VBO[0] = cube.VBO;
+	VAO[0] = cube.VAO;
+	unsigned int texture = cube.texture;
+	Block gruenerBlock(gruenShader, cube);
+	Block orangenerBlock(orangeShader, cube);
+	Block roterBlock(rotShader, cube);
+
+	std::vector <Block> blocks = { gruenerBlock, roterBlock };
+
+	int height = 22;
+	int widht = 11;
+
+	std::vector<std::vector<GameSector> > gamefield(widht, std::vector<GameSector>(height));
+	for (int i = 0; i < widht; i++) {
+		for (int j = 0; j < height; j++) {
+			//Worldposition wird generiert, /2.0f damit sich alles im zentrum befindet
+			glm::vec3 pos(i - (widht / 2.0f), j - (height / 2.0f), -25.0f);
+			if (i == 10 || j == 21) {
+				GameSector gs(pos, orangenerBlock);
+				gs.blocked = true;
+				gamefield[i][j] = gs;
+				continue;
+			}
+			if (i > 0 && j > 0) {
+				GameSector gs(pos);
+				gs.blocked = false;
+				gamefield[i][j] = gs;
+				continue;
+			}
+			GameSector gs(pos, orangenerBlock);
+			gs.blocked = true;
+			gamefield[i][j] = gs;
 		}
-		//gap
-		//y = 0.0f;
-		//x += 0.05f;
 	}
 
-	BlockObject block(vertices);
-	unsigned int VBO = block.VBO;
-	unsigned int VAO = block.VAO;
-	unsigned int texture = block.texture;
+	Tetromino t1(gamefield,blocks,0);
 
-	shader1.setInt("texture1", 0);
+	
+	
+	unsigned int uboMatrices = bindUniformBuffer(shaders);
+
+	gruenShader.setInt("texture1", 0);
+	orangeShader.setInt("texture1", 0);
+	rotShader.setInt("texture1", 0);
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
 	{
-		shader1.use();
-
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -140,89 +179,64 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// bind textures on corresponding texture units
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		// set the view and projection matrix in the uniform block - we only have to do this once per loop iteration.
+		glm::mat4 view = camera.GetViewMatrix();
 
-		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 view = glm::mat4(1.0f);
-		glm::mat4 projection = glm::mat4(1.0f);
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-		projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		shader1.setMat4("projection", projection);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, texture);
 
-		// camera/view transformation
-		view = camera.GetViewMatrix();
-		shader1.setMat4("view", view);
-
-
-		// render gamearea
-		glBindVertexArray(VAO);
-		for (unsigned int i = 0; i < (sizeof(gamefield) / sizeof(*gamefield)); i++)
+		glBindVertexArray(VAO[0]);
+		
+		for (unsigned int i = 0; i < widht; i++)
 		{
-			for (unsigned int j = 0; j < (sizeof(gamefield[i]) / sizeof(*gamefield[i])); j++)
+			for (unsigned int j = 0; j < height; j++)
 			{
-				if (i == 10 || j == 21) {
-					model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-					model = glm::translate(model, gamefield[i][j]);
-					float angle = 0.0;
-					model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-					shader1.setMat4("model", model);
-					glDrawArrays(GL_TRIANGLES, 0, 36);
-					continue;
-				}
-
-				if (i > 0 && j > 0) {
-					continue;
-				}
-
-				// calculate the model matrix for each object and pass it to shader before drawing
-				model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-				model = glm::translate(model, gamefield[i][j]);
-				float angle = 0.0;
-				model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-				shader1.setMat4("model", model);
-				glDrawArrays(GL_TRIANGLES, 0, 36);
+				glm::mat4 model = glm::mat4(1.0f);
+				glm::mat4 transform = glm::mat4(1.0f);
+				//model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+				model = glm::translate(model, gamefield[i][j].WorldPosition);
+				gamefield[i][j].block.draw(model,transform);
 			}
 		}
+		
+		//Figur
+		std::vector<float> info = t1.draw(m_speed, r_speed);
+		m_speed = info[0];
+		r_speed = info[1];
 
-
-		//draw blocks that are placed
-		if (true) {
-
-		}
-
-		//draw new Figur and  and rotate
-		//than move down
-
-
-		//test
-		for (unsigned int i = 3; i < 7; i++)
-		{
-			glm::mat4 transform = glm::mat4(1.0f);
-			//transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-			transform = glm::translate(transform, (float)glfwGetTime() * glm::vec3(0.0f, -1.0f, 0.0f));
-			shader1.setMat4("transform", transform);
-
-			model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-			model = glm::translate(model, gamefield[i][5]);
-			float angle = 0.0;
-			//model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			shader1.setMat4("model", model);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
-
+		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, VAO);
+	glDeleteBuffers(1, VBO);
 	glfwTerminate();
 	return 0;
 }
 
-
-
+unsigned int bindUniformBuffer(std::vector<Shader> shaders) {
+	for (int i = 0; i < shaders.size(); i++) {
+		unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaders[i].ID, "Matrices");
+		glUniformBlockBinding(shaders[i].ID, uniformBlockIndex, 0);
+	}
+	// Now actually create the buffer
+	unsigned int uboMatrices;
+	glGenBuffers(1, &uboMatrices);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	// define the range of the buffer that links to a uniform binding point
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+	glm::mat4 projection = glm::perspective(45.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	return uboMatrices;
+}
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -239,6 +253,15 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		m_speed = 0.25f;
+	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		m_speed = -0.25f;
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		r_speed = 1.0f;
+	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		r_speed = -1.0f;
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

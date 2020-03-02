@@ -27,8 +27,8 @@
     <ClCompile Include="stb_image_implementation.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="Gamesector.cpp">
-      <Filter>Quelldateien</Filter>
+    <ClCompile Include="Gamesector.h">
+      <Filter>Headerdateien</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -44,12 +44,24 @@
     <ClInclude Include="stb_image.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Block.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Tetromino.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragmentShader.fs">
+    <None Include="blockShader.vs">
       <Filter>shader</Filter>
     </None>
-    <None Include="vertexShader.vs">
+    <None Include="orange.fs">
+      <Filter>shader</Filter>
+    </None>
+    <None Include="gruen.fs">
+      <Filter>shader</Filter>
+    </None>
+    <None Include="rot.fs">
       <Filter>shader</Filter>
     </None>
   </ItemGroup>

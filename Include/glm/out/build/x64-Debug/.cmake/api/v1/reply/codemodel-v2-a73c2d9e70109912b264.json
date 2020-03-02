@@ -27,8 +27,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/Users/Maxim Kiesel/Desktop/schnelles Tetris/Include/glm/out/build/x64-Debug",
-		"source" : "C:/Users/Maxim Kiesel/Desktop/schnelles Tetris/Include/glm"
+		"build" : "C:/Users/maxim/source/repos/schnellesTetris/Include/glm/out/build/x64-Debug",
+		"source" : "C:/Users/maxim/source/repos/schnellesTetris/Include/glm"
 	},
 	"version" : 
 	{

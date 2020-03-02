@@ -29,7 +29,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -S"C:\Users\Maxim Kiesel\Desktop\schnelles Tetris\Include\glm" -B"C:\Users\Maxim Kiesel\Desktop\schnelles Tetris\Include\glm\out\build\x64-Debug"
+  command = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:\Users\maxim\source\repos\schnellesTetris\Include\glm -BC:\Users\maxim\source\repos\schnellesTetris\Include\glm\out\build\x64-Debug
   description = Re-running CMake...
   generator = 1
 

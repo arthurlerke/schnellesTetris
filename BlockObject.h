@@ -1,3 +1,6 @@
+#ifndef BLOCKOBJECT_H
+#define BLOCKOBJECT_H
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "stb_image.h"
@@ -13,6 +16,9 @@ public:
 	unsigned int VBO, VAO;
     unsigned int texture;
 
+
+    BlockObject() {}
+
 	BlockObject(float (&vertices)[180]) {   
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
@@ -26,10 +32,6 @@ public:
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
-        // load and create a texture 
-        // -------------------------
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
         // set the texture wrapping/filtering options (on the currently bound texture object)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -50,3 +52,4 @@ public:
         stbi_image_free(data);
 	}
 };
+#endif
