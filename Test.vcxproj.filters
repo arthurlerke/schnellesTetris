@@ -67,5 +67,8 @@
     <None Include="blau.fs">
       <Filter>shader</Filter>
     </None>
+    <None Include="testVS.vs">
+      <Filter>shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

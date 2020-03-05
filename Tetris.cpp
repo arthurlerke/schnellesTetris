@@ -14,13 +14,15 @@
 #include <iostream>
 
 #define move 1.0f
+#define rotate 1.0f
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 void setMovingSpeed(float direction);
-bool tetrominoIsStill();
+bool tetrominoIsStillMoving();
+bool tetrominoIsStillRotating();
 unsigned int bindUniformBuffer(std::vector<Shader> shaders);
 
 float vertices[] = {
@@ -85,6 +87,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
+
+float rotateDirection = 0.0f;
 float moveDirection = 0.0f;
 bool rotateBlock = false;
 bool moveDown = false;
@@ -122,17 +126,18 @@ int main()
 	Shader rotShader("blockShader.vs", "rot.fs");
 	Shader blauShader("blockShader.vs", "blau.fs");
 
+	BlockObject cube(vertices);
+	unsigned int VBO[2], VAO[2];
+	VBO[0] = cube.VBO;
+	VAO[0] = cube.VAO;
+	unsigned int texture = cube.texture;
+
+
+
 	std::vector<Shader> shaders = {
 		gruenShader,orangeShader,rotShader, blauShader
 	};
 
-	BlockObject cube(vertices);
-	//BlockObject cube2(vertices);
-	unsigned int VBO[2], VAO[2];
-
-	VBO[0] = cube.VBO;
-	VAO[0] = cube.VAO;
-	unsigned int texture = cube.texture;
 	Block gruenerBlock(gruenShader, cube);
 	Block orangenerBlock(orangeShader, cube);
 	Block roterBlock(rotShader, cube);
@@ -216,7 +221,7 @@ int main()
 			t1 = Tetromino(&gamefield, blocks, 0);
 		}
 		//Tetromino
-		t1.draw(&moveDirection, r_speed, &moveDown);
+		t1.draw(&moveDirection, &rotateDirection, &moveDown);
 		
 		
 		glfwSwapBuffers(window);
@@ -264,30 +269,45 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		if (tetrominoIsStill()) {
+		if (tetrominoIsStillMoving() && tetrominoIsStillRotating()) {
 			moveDown = false;
 			moveDirection = move * 1.0f;
 		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		if (tetrominoIsStill()) {
+		if (tetrominoIsStillMoving() && tetrominoIsStillRotating()) {
 			moveDown = false;
 			moveDirection = move * -1.0f;
 		}
 	}
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		rotateBlock = true;
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		//rotateBlock = true;
+	}
 	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		if (tetrominoIsStill()) {
+		if (tetrominoIsStillMoving() && tetrominoIsStillRotating()) {
 			moveDirection = -1.0f;
 			moveDown = true;
 		}
 	}
 
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		if (tetrominoIsStillRotating()) {
+			rotateDirection = 1.0f;
+		}
+	}
+	else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+		if (tetrominoIsStillRotating()) {
+			rotateDirection = -1.0f;
+		}
+	}
 }
 
-bool tetrominoIsStill() {
+bool tetrominoIsStillMoving() {
 	return moveDirection == 0;
+}
+
+bool tetrominoIsStillRotating() {
+	return rotateDirection == 0;
 }
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------

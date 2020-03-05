@@ -146,6 +146,7 @@
     <None Include="gruen.fs" />
     <None Include="orange.fs" />
     <None Include="rot.fs" />
+    <None Include="testVS.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
