@@ -13,8 +13,8 @@
 #include "Tetromino.h"
 #include <iostream>
 
-int height = 22;
-int width = 12;
+int height = 8;
+int width = 11;
 float distance = 25.0f;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

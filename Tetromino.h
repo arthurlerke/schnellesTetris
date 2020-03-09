@@ -15,10 +15,13 @@
 class Tetromino {
 	public:
 		Tetromino(std::vector < std::vector<GameSector> >* gf, std::vector <Block> blocks);
+		Tetromino(std::vector < std::vector<GameSector> >* gf, std::vector<GameSector> blocksToMoveDown);
 		void draw(float* m_direction, float* r_direction, bool* shouldMoveDown);
 		bool reachedBottom = false;
 
 	private:
+		bool *shouldMoveDown;
+		float* moveDirection;
 		int height;
 		int width;
 		int size = 4;
@@ -56,6 +59,10 @@ class Tetromino {
 		void createTBlock(int x, int y, Block blockColor);
 		void createLongBlock(int x, int y, Block blockColor);
 		void createBlock(Block blockColor, std::vector<glm::vec2> positions);
+		int getMaxNumber(std::vector<int> numbers);
+		void moveBlocksAboveDown(int max);
+		void setupVariables();
+		void createFigurFromVector(std::vector<GameSector> blocksToMoveDown);
 };
 
 #endif

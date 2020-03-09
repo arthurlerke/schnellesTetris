@@ -6,18 +6,16 @@
 		height = (*gamefield)[0].size();
 
 		createRandomBlock(blocks);
+		setupVariables();
+	}
 
-		for (int i = 0; i < elements.size(); i++) {
-			models.push_back(glm::translate(glm::mat4(1.0f), elements[i].WorldPosition));
-			transforms.push_back(glm::mat4(1.0f));
-			currentPositions.push_back(elements[i].WorldPosition);
-			float xPosition = elements[i].WorldPosition.x + (float)width / 2.0f;
-			float yPosition = elements[i].WorldPosition.y + (float)height / 2.0f;
-			currentIndex.push_back(glm::vec2(xPosition, yPosition));
-			moved.push_back(0);
-			movedY.push_back(0);
-			rotated.push_back(0);
-		}
+	Tetromino::Tetromino(std::vector < std::vector<GameSector> >* gf, std::vector<GameSector> blocksToMoveDown) {
+		gamefield = gf;
+		width = gamefield->size();
+		height = (*gamefield)[0].size();
+
+		createFigurFromVector(blocksToMoveDown);
+		setupVariables();
 	}
 
 	bool Tetromino::isMoveable(int xDirection, int yDirection) {
@@ -116,6 +114,7 @@
 
 	void Tetromino::checkForFullRow() {
 		int count = 0;
+		std::vector <int> numbersY;
 		for (int i = 0; i < currentIndex.size(); i++) {
 			for (int j = 1; j < width - 1; j++) {
 				if ((*gamefield)[j][currentIndex[i].y].blocked == true) {
@@ -124,8 +123,8 @@
 			}
 
 			if (count == width - 2) {
+				numbersY.push_back(currentIndex[i].y);
 				for (int j = 1; j < width - 1; j++) {
-					std::cout << j;
 					GameSector gs((*gamefield)[j][currentIndex[i].y].WorldPosition);
 					gs.blocked = false;
 					(*gamefield)[j][currentIndex[i].y] = gs;
@@ -133,14 +132,30 @@
 			}
 			count = 0;
 		}
+		int max = getMaxNumber(numbersY);
+		if (max != -1) {
+			moveBlocksAboveDown(max);
+		}
+
 	}
 
-	void Tetromino::draw(float *m_direction, float *r_direction, bool *shouldMoveDown) {
+	int Tetromino::getMaxNumber(std::vector<int> numbers) {
+		if (numbers.size() == 0)
+			return -1;
+		int max = numbers[0];
+		for (int i = 1; i < numbers.size(); i++) {
+			max = std::max(max, numbers[i]);
+		}
+		return max;
+	}
+
+	void Tetromino::draw(float* m_direction, float* r_direction, bool * isMovingDown) {
 		for (int i = 0; i < models.size(); i++) {
 			glm::mat4 model = models[i];
 			glm::mat4 transform = transforms[i];
 			pivot = elements[pivotIndex].WorldPosition;
-
+			shouldMoveDown = isMovingDown;
+			moveDirection = m_direction;
 			if (*shouldMoveDown) {
 				moveDown(&model, i, shouldMoveDown, m_direction);
 			}
@@ -148,12 +163,33 @@
 				move(&model, m_direction, i);
 				rotate(&transform, r_direction, i);
 			}
-
-			models[i] = model;
-			transforms[i] = transform;
-			elements[i].block.draw(model, transform);
+			if (models.size() > i) {
+				models[i] = model;
+				transforms[i] = transform;
+				elements[i].block.draw(model, transform);
 			//pivot = elements[pivotIndex].WorldPosition;
+			}
 		}
+	}
+	void Tetromino::moveBlocksAboveDown(int max) {
+		//create vector of blocks
+		//than create tetromino from these blocks
+		std::vector<GameSector> blocks;
+
+		for (int i = 1; i < (*gamefield).size()-1; i++) {
+			for (int j = max; j < (*gamefield)[0].size()-1; j++) {
+				if ((*gamefield)[i][j].blocked == true) {
+					blocks.push_back((*gamefield)[i][j]);
+					GameSector gs((*gamefield)[j][currentIndex[i].y].WorldPosition);
+					gs.blocked = false;
+					(*gamefield)[i][j] = gs;
+				}
+			}
+		}
+		createFigurFromVector(blocks);
+		setupVariables();
+		*shouldMoveDown = true;
+		*moveDirection = -1.0f;
 	}
 
 	bool Tetromino::checkCollision(float direction) {
@@ -183,7 +219,7 @@
 		int x = gamefield->size() / 2;
 		int y = (*gamefield)[0].size() - 2;
 
-		std::cout << randomForm;
+		randomForm = 3;
 		//L
 		switch (randomForm) {
 		case 0:
@@ -232,4 +268,29 @@
 		elements.push_back(GameSector((*gamefield)[positions[2].x][positions[2].y].WorldPosition, blockColor));
 		elements.push_back(GameSector((*gamefield)[positions[3].x][positions[3].y].WorldPosition, blockColor));
 		pivot = elements[pivotIndex].WorldPosition;
+	}
+
+	void Tetromino::setupVariables() {
+		models = std::vector<glm::mat4>();
+		transforms = std::vector<glm::mat4>();
+		currentPositions = std::vector<glm::vec3>();
+		currentIndex = std::vector<glm::vec2>();
+		moved = std::vector<int>();
+		movedY = std::vector<int>();
+		rotated = std::vector<int>();
+		for (int i = 0; i < elements.size(); i++) {
+			models.push_back(glm::translate(glm::mat4(1.0f), elements[i].WorldPosition));
+			transforms.push_back(glm::mat4(1.0f));
+			currentPositions.push_back(elements[i].WorldPosition);
+			float xPosition = elements[i].WorldPosition.x + (float)width / 2.0f;
+			float yPosition = elements[i].WorldPosition.y + (float)height / 2.0f;
+			currentIndex.push_back(glm::vec2(xPosition, yPosition));
+			moved.push_back(0);
+			movedY.push_back(0);
+			rotated.push_back(0);
+		}
+	}
+
+	void Tetromino::createFigurFromVector(std::vector<GameSector> blocksToMoveDown) {
+		elements = blocksToMoveDown;
 	}
