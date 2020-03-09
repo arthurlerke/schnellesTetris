@@ -125,7 +125,7 @@ int main()
 		}
 	}
 
-	Tetromino t1(&gamefield,blocks,0);
+	Tetromino t1(&gamefield,blocks);
 
 	
 	
@@ -172,7 +172,7 @@ int main()
 			}
 		}
 		if (t1.reachedBottom) {
-			t1 = Tetromino(&gamefield, blocks, 0);
+			t1 = Tetromino(&gamefield, blocks);
 		}
 		//Tetromino
 		t1.draw(&moveDirection, &rotateDirection, &moveDown);

@@ -36,26 +36,12 @@ public:
 
 	bool reachedBottom = false;
 
-	Tetromino(std::vector < std::vector<GameSector> > *gf, std::vector <Block> blocks, int c) {
+	Tetromino(std::vector < std::vector<GameSector> > *gf, std::vector <Block> blocks) {
 		gamefield = gf;
 		width = gamefield->size();
 		height = (*gamefield)[0].size();
-		int x = gamefield->size() / 2;
-		int y = (*gamefield)[0].size() - 2;
-		std::random_device rd;
-		std::mt19937 generator(rd());
-		std::uniform_int_distribution<> range(0, blocks.size() - 1);
-		Block b = blocks[range(generator)];
 
-		//L
-		if (c == 0) {
-			elements.push_back(GameSector((*gamefield)[x][y].WorldPosition, b));
-			elements.push_back(GameSector((*gamefield)[x][y - 1.0].WorldPosition, b));
-			elements.push_back(GameSector((*gamefield)[x][y - 2.0].WorldPosition, b));
-			elements.push_back(GameSector((*gamefield)[x + 1.0][y - 2.0].WorldPosition, b));
-			pivotIndex = 1;
-			pivot = elements[pivotIndex].WorldPosition;
-		}
+		createRandomBlock(blocks);
 
 		//ander Figuren
 
@@ -232,6 +218,68 @@ public:
 		}
 	}
 
+	private:
+		void createRandomBlock(std::vector <Block> blocks) {
+			std::random_device rd;
+			std::mt19937 generator(rd());
+			std::uniform_int_distribution<> colorRange(0, blocks.size() - 1);
+			std::uniform_int_distribution<> formRange(0, 3);
+			Block blockColor = blocks[colorRange(generator)];
+			int randomForm = formRange(generator);
+
+			int x = gamefield->size() / 2;
+			int y = (*gamefield)[0].size() - 2;
+
+			std::cout << randomForm;
+			//L
+			switch (randomForm) {
+			case 0:
+				createLBlock(x, y, blockColor);
+				break;
+			case 1:
+				createSquareBlock(x, y, blockColor);
+				break;
+			case 2:
+				createTBlock(x, y, blockColor);
+				break;
+			case 3:
+				createLongBlock(x, y, blockColor);
+				break;
+			default:
+				break;
+			}
+		}
+		void createLBlock(int x, int y, Block blockColor) {
+			std::vector<glm::vec2> positions = { {x,y}, {x,y - 1}, {x, y - 2}, {x + 1,y - 2} };
+			pivotIndex = 1;
+			createBlock(blockColor, positions);
+		}
+		void createSquareBlock(int x, int y, Block blockColor) {
+
+			std::vector<glm::vec2> positions = { {x,y}, {x + 1,y}, {x, y - 1}, {x + 1,y - 1} };
+			pivotIndex = 0;
+			createBlock(blockColor, positions);
+		}
+		void createTBlock(int x, int y, Block blockColor) {
+
+			std::vector<glm::vec2> positions = { {x,y}, {x - 1,y - 1}, {x, y - 1}, {x + 1,y - 1} };
+			pivotIndex = 2;
+			createBlock(blockColor, positions);
+		}
+		void createLongBlock(int x, int y, Block blockColor) {
+
+			std::vector<glm::vec2> positions = { {x,y}, {x,y - 1}, {x, y - 2}, {x,y - 3} };
+			pivotIndex = 1;
+			createBlock(blockColor, positions);
+		}
+
+		void createBlock(Block blockColor, std::vector<glm::vec2> positions) {
+			elements.push_back(GameSector((*gamefield)[positions[0].x][positions[0].y].WorldPosition, blockColor));
+			elements.push_back(GameSector((*gamefield)[positions[1].x][positions[1].y].WorldPosition, blockColor));
+			elements.push_back(GameSector((*gamefield)[positions[2].x][positions[2].y].WorldPosition, blockColor));
+			elements.push_back(GameSector((*gamefield)[positions[3].x][positions[3].y].WorldPosition, blockColor));
+			pivot = elements[pivotIndex].WorldPosition;
+		}
 };
 
 #endif
