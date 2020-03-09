@@ -30,6 +30,9 @@
     <ClCompile Include="Gamesector.h">
       <Filter>Headerdateien</Filter>
     </ClCompile>
+    <ClCompile Include="Tetromino.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
