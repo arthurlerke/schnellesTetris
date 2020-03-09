@@ -175,7 +175,6 @@ public:
 
 	void checkForFullRow() {
 		int count = 0;
-		std::cout << "yee";
 		for (int i = 0; i < currentIndex.size(); i++) {
 			for (int j = 1; j < width - 1; j++) {
 				if ((*gamefield)[j][currentIndex[i].y].blocked == true) {
@@ -185,7 +184,6 @@ public:
 
 			if (count == width - 2) {
 				for (int j = 1; j < width - 1; j++) {
-
 					std::cout << j;
 					GameSector gs((*gamefield)[j][currentIndex[i].y].WorldPosition);
 					gs.blocked = false;
