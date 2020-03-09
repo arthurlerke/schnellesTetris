@@ -3,18 +3,18 @@
 
 
 #include "Shader.h"
-#include "BlockObject.h"
+#include "Cube.h"
 
 
 class Block {
 public:
 
 	Shader shader;
-	BlockObject blockObject;
+	Cube blockObject;
 
 	Block(){}
 
-	Block(Shader sh, BlockObject bo) {
+	Block(Shader sh, Cube bo) {
 		shader = sh;
 		blockObject = bo;
 	}

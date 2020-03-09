@@ -8,7 +8,7 @@
 
 #include "Shader.h"
 #include "camera.h"
-#include "BlockObject.h"
+#include "Cube.h"
 #include "Gamesector.h"
 #include "Tetromino.h"
 #include <iostream>
@@ -126,7 +126,7 @@ int main()
 	Shader rotShader("blockShader.vs", "rot.fs");
 	Shader blauShader("blockShader.vs", "blau.fs");
 
-	BlockObject cube(vertices);
+	Cube cube(vertices);
 	unsigned int VBO[2], VAO[2];
 	VBO[0] = cube.VBO;
 	VAO[0] = cube.VAO;

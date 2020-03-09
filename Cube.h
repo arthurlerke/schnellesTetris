@@ -1,5 +1,5 @@
-#ifndef BLOCKOBJECT_H
-#define BLOCKOBJECT_H
+#ifndef CUBE_H
+#define CUBE_H
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -10,16 +10,16 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-class BlockObject {
+class Cube {
 public:
 
 	unsigned int VBO, VAO;
     unsigned int texture;
 
 
-    BlockObject() {}
+    Cube() {}
 
-	BlockObject(float (&vertices)[180]) {   
+	Cube(float (&vertices)[180]) {   
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glBindVertexArray(VAO);

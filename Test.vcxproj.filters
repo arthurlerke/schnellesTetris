@@ -47,7 +47,7 @@
     <ClInclude Include="Tetromino.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="BlockObject.h">
+    <ClInclude Include="Cube.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
