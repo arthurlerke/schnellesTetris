@@ -38,9 +38,6 @@
     <ClInclude Include="camera.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="BlockObject.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="stb_image.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
@@ -48,6 +45,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="Tetromino.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockObject.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

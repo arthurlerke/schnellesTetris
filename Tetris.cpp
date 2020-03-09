@@ -13,8 +13,9 @@
 #include "Tetromino.h"
 #include <iostream>
 
-#define move 1.0f
-#define rotate 1.0f
+int height = 22;
+int width = 12;
+float distance = 25.0f;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -25,7 +26,33 @@ bool tetrominoIsStillMoving();
 bool tetrominoIsStillRotating();
 unsigned int bindUniformBuffer(std::vector<Shader> shaders);
 
-float vertices[] = {
+float m_speed = 0.0;
+float r_speed = 0.0;
+glm::mat4 oldPos = glm::mat4(1.0f);
+
+// settings
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
+
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
+// timing
+float deltaTime = 0.0f;	// time between current frame and last frame
+float lastFrame = 0.0f;
+
+
+float rotateDirection = 0.0f;
+float moveDirection = 0.0f;
+bool rotateBlock = false;
+bool moveDown = false;
+
+int main()
+{
+	float vertices[] = {
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
 		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -67,34 +94,7 @@ float vertices[] = {
 		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-};
-
-float m_speed = 0.0;
-float r_speed = 0.0;
-glm::mat4 oldPos = glm::mat4(1.0f);
-
-// settings
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
-
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
-
-// timing
-float deltaTime = 0.0f;	// time between current frame and last frame
-float lastFrame = 0.0f;
-
-
-float rotateDirection = 0.0f;
-float moveDirection = 0.0f;
-bool rotateBlock = false;
-bool moveDown = false;
-
-int main()
-{
+	};
 	//Window creation
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -145,15 +145,12 @@ int main()
 
 	std::vector <Block> blocks = { gruenerBlock, roterBlock, blauerBlock };
 
-	int height = 22;
-	int widht = 11;
-
-	std::vector<std::vector<GameSector> > gamefield(widht, std::vector<GameSector>(height));
-	for (int i = 0; i < widht; i++) {
+	std::vector<std::vector<GameSector> > gamefield(width, std::vector<GameSector>(height));
+	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
 			//Worldposition wird generiert, /2.0f damit sich alles im zentrum befindet
-			glm::vec3 pos(i - (widht / 2.0f), j - (height / 2.0f), -25.0f);
-			if (i == 10 || j == 21) {
+			glm::vec3 pos(i - (width / 2.0f), j - (height / 2.0f), -distance);
+			if (i == width-1 || j == height-1) {
 				GameSector gs(pos, orangenerBlock);
 				gs.blocked = true;
 				gamefield[i][j] = gs;
@@ -206,7 +203,7 @@ int main()
 
 		glBindVertexArray(VAO[0]);
 		
-		for (unsigned int i = 0; i < widht; i++)
+		for (unsigned int i = 0; i < width; i++)
 		{
 			for (unsigned int j = 0; j < height; j++)
 			{
@@ -271,13 +268,13 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 		if (tetrominoIsStillMoving() && tetrominoIsStillRotating()) {
 			moveDown = false;
-			moveDirection = move * 1.0f;
+			moveDirection = 1.0f;
 		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
 		if (tetrominoIsStillMoving() && tetrominoIsStillRotating()) {
 			moveDown = false;
-			moveDirection = move * -1.0f;
+			moveDirection = -1.0f;
 		}
 	}
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
@@ -292,12 +289,12 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
 		if (tetrominoIsStillRotating()) {
-			rotateDirection = 1.0f;
+			rotateDirection = -1.0f;
 		}
 	}
 	else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
 		if (tetrominoIsStillRotating()) {
-			rotateDirection = -1.0f;
+			rotateDirection = 1.0f;
 		}
 	}
 }

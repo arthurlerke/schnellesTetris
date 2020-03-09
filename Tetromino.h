@@ -16,7 +16,7 @@ class Tetromino {
 public:
 
 	int height;
-	int widht;
+	int width;
 
 	int size = 4;
 
@@ -36,10 +36,9 @@ public:
 
 	bool reachedBottom = false;
 
-
 	Tetromino(std::vector < std::vector<GameSector> > *gf, std::vector <Block> blocks, int c) {
 		gamefield = gf;
-		widht = gamefield->size();
+		width = gamefield->size();
 		height = (*gamefield)[0].size();
 		int x = gamefield->size() / 2;
 		int y = (*gamefield)[0].size() - 2;
@@ -65,7 +64,9 @@ public:
 			models.push_back(glm::translate(glm::mat4(1.0f), elements[i].WorldPosition));
 			transforms.push_back(glm::mat4(1.0f));
 			currentPositions.push_back(elements[i].WorldPosition);
-			currentIndex.push_back(glm::vec2(elements[i].WorldPosition.x + 5.5, elements[i].WorldPosition.y + 11));
+			float xPosition = elements[i].WorldPosition.x + (float)width / 2.0f;
+			float yPosition = elements[i].WorldPosition.y + (float)height / 2.0f;
+			currentIndex.push_back(glm::vec2(xPosition, yPosition));
 			moved.push_back(0);
 			movedY.push_back(0);
 			rotated.push_back(0);
@@ -83,7 +84,7 @@ public:
 		return true;
 	}
 
-	float speed = 4.0f;
+	float speed = 20.0f;
 	std::vector<int> moved;
 	void move(glm::mat4 *model, float *m_direction, int index) {
 		if (!isMoveable(*m_direction, 0)) {
@@ -122,11 +123,11 @@ public:
 	}
 
 	float maxAngle = 90.0f;
-	float r_speed = 10;
+	float r_speed = 1;
 	std::vector<int> rotated;
 	void rotate(glm::mat4 *transform, float *r_direction, int index) {
 		if (*r_direction != 0.0f && rotated[index] < maxAngle) {
-			rotated[index] +=r_speed;
+			rotated[index] += r_speed;
 			glm::vec3 pivotTemp = pivot - elements[index].WorldPosition;
 			*transform = glm::translate(*transform, pivotTemp);
 			*transform = glm::rotate(*transform, glm::radians(*r_direction*r_speed), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -146,14 +147,14 @@ public:
 		for (int i = 0; i < currentIndex.size(); i++) {
 			int x = currentIndex[i].x;
 			int y = currentIndex[i].y;
-			int rx = x - px;
-			int ry = y - py;
-			int xx = ry;
-			int yy = -rx;
-			xx = (xx* r_direction) + px;
-			yy = (yy* r_direction) + py;
-			currentIndex[i].x = xx;
-			currentIndex[i].y = yy;
+			int translatedX = x - px;
+			int translatedY = y - py;
+			int newX = translatedY;
+			int newY = -translatedX;
+			newX = (newX * r_direction) + px;
+			newY = (newY * r_direction) + py;
+			currentIndex[i].x = newX;
+			currentIndex[i].y = newY;
 		}
 	}
 
@@ -176,14 +177,14 @@ public:
 		int count = 0;
 		std::cout << "yee";
 		for (int i = 0; i < currentIndex.size(); i++) {
-			for (int j = 1; j < widht - 1; j++) {
+			for (int j = 1; j < width - 1; j++) {
 				if ((*gamefield)[j][currentIndex[i].y].blocked == true) {
 					count++;
 				}
 			}
 
-			if (count == widht - 2) {
-				for (int j = 1; j < widht - 1; j++) {
+			if (count == width - 2) {
+				for (int j = 1; j < width - 1; j++) {
 
 					std::cout << j;
 					GameSector gs((*gamefield)[j][currentIndex[i].y].WorldPosition);
