@@ -117,7 +117,7 @@
 		std::vector <int> numbersY;
 		for (int i = 0; i < currentIndex.size(); i++) {
 			for (int j = 1; j < width - 1; j++) {
-				if ((*gamefield)[j][currentIndex[i].y].blocked == true) {
+				if ((*gamefield)[j][currentIndex[i].y].blocked) {
 					count++;
 				}
 			}
@@ -176,11 +176,12 @@
 		//than create tetromino from these blocks
 		std::vector<GameSector> blocks;
 
+		//Minus 1 because the most right block is the wall
 		for (int i = 1; i < (*gamefield).size()-1; i++) {
-			for (int j = max; j < (*gamefield)[0].size()-1; j++) {
-				if ((*gamefield)[i][j].blocked == true) {
+			for (int j = max + 1; j < (*gamefield)[0].size()-1; j++) {
+				if ((*gamefield)[i][j].blocked) {
 					blocks.push_back((*gamefield)[i][j]);
-					GameSector gs((*gamefield)[j][currentIndex[i].y].WorldPosition);
+					GameSector gs((*gamefield)[i][j].WorldPosition);
 					gs.blocked = false;
 					(*gamefield)[i][j] = gs;
 				}
@@ -188,6 +189,7 @@
 		}
 		createFigurFromVector(blocks);
 		setupVariables();
+		reachedBottom = false;
 		*shouldMoveDown = true;
 		*moveDirection = -1.0f;
 	}
@@ -273,7 +275,6 @@
 	void Tetromino::setupVariables() {
 		models = std::vector<glm::mat4>();
 		transforms = std::vector<glm::mat4>();
-		currentPositions = std::vector<glm::vec3>();
 		currentIndex = std::vector<glm::vec2>();
 		moved = std::vector<int>();
 		movedY = std::vector<int>();
@@ -281,7 +282,6 @@
 		for (int i = 0; i < elements.size(); i++) {
 			models.push_back(glm::translate(glm::mat4(1.0f), elements[i].WorldPosition));
 			transforms.push_back(glm::mat4(1.0f));
-			currentPositions.push_back(elements[i].WorldPosition);
 			float xPosition = elements[i].WorldPosition.x + (float)width / 2.0f;
 			float yPosition = elements[i].WorldPosition.y + (float)height / 2.0f;
 			currentIndex.push_back(glm::vec2(xPosition, yPosition));

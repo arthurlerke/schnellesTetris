@@ -38,7 +38,7 @@ class Tetromino {
 		float maxAngle = 90.0f;
 		float r_speed = 1;
 		std::vector<int> rotated;
-		float speed = 20.0f;
+		float speed = 120.0f;
 		std::vector<int> moved;
 		std::vector<int> movedY;
 		float angleRot = 0;
